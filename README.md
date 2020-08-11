@@ -3,7 +3,11 @@
 # Reldens - Modifiers
 
 ## About
+
 This package is for the Modifiers class, which helps to apply and revert values to an specific target properties.
+
+
+## How to
 
 To use this class you just need to require/import it and passing the required properties to create each instance.
 
@@ -44,6 +48,7 @@ The goal behind this is to always use as target the object that contains all the
  - The target can be specified on the modifier creation or in the execution. In the second case the target will be set
 on the `modifier.target` property.
 
+---
 
 ### [Reldens](https://github.com/damian-pastorini/reldens/ "Reldens")
 
