@@ -35,7 +35,7 @@ let modifyAtk = new Modifier({
    value: 200
 });
 
-// and apply or revert the modifier by passing the target on the execution (this will set the target on the modifier):
+// and apply or revert the modifier by passing and setting the target on the execution:
 modifyAtk.apply(targetObject);
 ```
 
