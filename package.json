@@ -1,0 +1,38 @@
+{
+    "name": "@reldens/package",
+    "scope": "@reldens",
+    "version": "0.1.0",
+    "description": "Reldens - Package",
+    "author": "Damian A. Pastorini",
+    "license": "MIT",
+    "homepage": "https://github.com/damian-pastorini/reldens-package",
+    "source": true,
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/damian-pastorini/reldens-package.git"
+    },
+    "keywords": [
+        "reldens",
+        "package",
+        "game",
+        "mmorpg",
+        "rpg",
+        "dwd",
+        "colyseus",
+        "phaser",
+        "parcel",
+        "nodejs",
+        "mmo",
+        "multiplayer",
+        "rol",
+        "platform",
+        "framework"
+    ],
+    "bugs": {
+        "url": "https://github.com/damian-pastorini/reldens-package/issues"
+    },
+    "dependencies": {
+        "@reldens/utils": "^0.1.7"
+    }
+}
