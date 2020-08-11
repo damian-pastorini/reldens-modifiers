@@ -1,20 +1,20 @@
 {
-    "name": "@reldens/package",
+    "name": "@reldens/modifiers",
     "scope": "@reldens",
     "version": "0.1.0",
-    "description": "Reldens - Package",
+    "description": "Reldens - Modifiers",
     "author": "Damian A. Pastorini",
     "license": "MIT",
-    "homepage": "https://github.com/damian-pastorini/reldens-package",
+    "homepage": "https://github.com/damian-pastorini/reldens-modifiers",
     "source": true,
     "main": "index.js",
     "repository": {
         "type": "git",
-        "url": "https://github.com/damian-pastorini/reldens-package.git"
+        "url": "https://github.com/damian-pastorini/reldens-modifiers.git"
     },
     "keywords": [
         "reldens",
-        "package",
+        "modifiers",
         "game",
         "mmorpg",
         "rpg",
@@ -30,7 +30,7 @@
         "framework"
     ],
     "bugs": {
-        "url": "https://github.com/damian-pastorini/reldens-package/issues"
+        "url": "https://github.com/damian-pastorini/reldens-modifiers/issues"
     },
     "dependencies": {
         "@reldens/utils": "^0.1.7"
