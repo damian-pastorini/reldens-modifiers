@@ -1,7 +1,7 @@
 {
     "name": "@reldens/modifiers",
     "scope": "@reldens",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Reldens - Modifiers",
     "author": "Damian A. Pastorini",
     "license": "MIT",
