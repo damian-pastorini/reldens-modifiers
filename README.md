@@ -4,7 +4,13 @@
 
 ## About
 
-This package is for the Modifiers class, which helps to apply and revert values to an specific target properties.
+This package is for the Modifiers class orinally created for the Reldens project, but now it can be used anywhere.
+By implementing this package you will get:
+- The Modifier class which is a helper to apply and revert values into an specific target properties.
+- The Conditions class which is a helper to avoid an action only if the condition is satisfied.
+- Conditions array can be set on a Modifier to avoid the execution.
+- Calculator class which apply or revert the values.
+- The PropertyManager class to easily get or set a value in any object property following a path.
 
 ## Documentation
 
