@@ -12,6 +12,10 @@ By implementing this package you will get:
 - Calculator class which apply or revert the values.
 - The PropertyManager class to easily get or set a value in any object property following a path.
 
+Need something specific?
+
+[Request a feature here: https://www.reldens.com/features-request](https://www.reldens.com/features-request)
+
 ## Documentation
 
 [https://www.reldens.com/documentation/modifiers](https://www.reldens.com/documentation/modifiers)
