@@ -5,9 +5,9 @@
  */
 
 module.exports = {
-    Modifier: require('./lib/modifier'),
-    Condition: require('./lib/condition'),
     Calculator: require('./lib/calculator'),
-    PropertyManager: require('./lib/property-manager'),
-    ModifierConst: require('./lib/constants')
+    Condition: require('./lib/condition'),
+    Modifier: require('./lib/modifier'),
+    ModifierConst: require('./lib/constants'),
+    PropertyManager: require('./lib/property-manager')
 };
