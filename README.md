@@ -4,7 +4,7 @@
 
 ## About
 
-This package is for the Modifiers class orinally created for the Reldens project, but now it can be used anywhere.
+This package is for the Modifiers class originally created for the Reldens project, but now it can be used anywhere.
 By implementing this package you will get:
 - The Modifier class which is a helper to apply and revert values into an specific target properties.
 - The Conditions class which is a helper to avoid an action only if the condition is satisfied.
