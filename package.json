@@ -1,7 +1,7 @@
 {
     "name": "@reldens/modifiers",
     "scope": "@reldens",
-    "version": "0.19.0",
+    "version": "0.19.1",
     "description": "Reldens - Modifiers",
     "author": "Damian A. Pastorini",
     "license": "MIT",
@@ -33,6 +33,6 @@
         "url": "https://github.com/damian-pastorini/reldens-modifiers/issues"
     },
     "dependencies": {
-        "@reldens/utils": "^0.19.0"
+        "@reldens/utils": "^0.20.0"
     }
 }
