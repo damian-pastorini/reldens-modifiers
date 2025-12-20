@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Key Commands
 
 ```bash
-# Run tests (no tests currently implemented)
+# Run tests
 npm test
 
 # Install dependencies
@@ -60,7 +60,7 @@ npm install
   - `getPropertyValue(propertyOwner, propertyString)` - Get nested property value
   - `setOwnerProperty(propertyOwner, propertyString, value)` - Set nested property value
   - `manageOwnerProperty(propertyOwner, propertyString, value)` - Internal property management
-  - `extractDeepProperty(propertyOwner, propertyPathParts)` - Recursively extract nested properties
+  - `extractChildPropertyOwner(propertyOwner, propertyPathParts)` - Navigate to parent object owning the final property
 
 **ModifierConst** (`lib/constants.js`):
 - Operation types: INC (1), DEC (2), DIV (3), MUL (4), INC_P (5), DEC_P (6), SET (7), METHOD (8), SET_N (9)
