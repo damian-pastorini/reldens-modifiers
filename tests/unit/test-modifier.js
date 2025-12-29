@@ -627,4 +627,596 @@ describe('Modifier', () => {
             assert.strictEqual(modifier.target, newTarget);
         });
     });
+
+    describe('NULL and Undefined Handling (Bug Fix Validation)', () => {
+        it('should handle NULL minValue (no limit applied)', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.DEC,
+                value: 150,
+                minValue: null
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, -50);
+            assert.strictEqual(modifier.minValue, null);
+        });
+
+        it('should handle NULL maxValue (no limit applied)', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 500,
+                maxValue: null
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 600);
+            assert.strictEqual(modifier.maxValue, null);
+        });
+
+        it('should treat undefined minValue as false', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.DEC,
+                value: 150
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, -50);
+            assert.strictEqual(modifier.minValue, false);
+        });
+
+        it('should treat undefined maxValue as false', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 500
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 600);
+            assert.strictEqual(modifier.maxValue, false);
+        });
+
+        it('should distinguish between maxValue=0 (hard limit) and maxValue=null (no limit)', () => {
+            let modifier1 = new Modifier({
+                key: 'test1',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 50,
+                maxValue: 0
+            });
+            modifier1.apply(target);
+            assert.strictEqual(target.health, 0);
+            let target2 = TestHelpers.createMockTarget();
+            let modifier2 = new Modifier({
+                key: 'test2',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 50,
+                maxValue: null
+            });
+            modifier2.apply(target2);
+            assert.strictEqual(target2.health, 150);
+        });
+
+        it('should handle database-like objects with NULL minValue/maxValue', () => {
+            let databaseRow = {
+                key: 'hp-boost',
+                property_key: 'health',
+                operation: 1,
+                value: '50',
+                minValue: null,
+                maxValue: null
+            };
+            let modifier = new Modifier(databaseRow);
+            modifier.apply(target);
+            assert.strictEqual(target.health, 150);
+            assert.strictEqual(modifier.minValue, null);
+            assert.strictEqual(modifier.maxValue, null);
+        });
+    });
+
+    describe('Invalid Operation Values', () => {
+        it('should handle string operation by converting to number', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: '1',
+                value: 50
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 150);
+        });
+
+        it('should handle invalid operation code returning original value', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: 999,
+                value: 50
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 100);
+        });
+
+        it('should handle NULL operation by converting to 0', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: null,
+                value: 50
+            });
+            assert.strictEqual(modifier.operation, 0);
+        });
+    });
+
+    describe('Invalid Value Types', () => {
+        it('should handle NaN value for INT type', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: NaN
+            });
+            assert.ok(Number.isNaN(modifier.value));
+        });
+
+        it('should handle Infinity value', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: Infinity
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, Infinity);
+        });
+
+        it('should handle empty string value by converting to 0', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: ''
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 100);
+        });
+
+        it('should handle NULL value by converting to 0', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: null
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 100);
+        });
+
+        it('should handle undefined value by converting to NaN', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: undefined
+            });
+            assert.ok(Number.isNaN(modifier.value));
+        });
+    });
+
+    describe('Property Access Errors', () => {
+        it('should throw error when accessing non-existent property', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'nonExistentProperty',
+                operation: ModifierConst.OPS.INC,
+                value: 10
+            });
+            assert.throws(() => {
+                modifier.apply(target);
+            });
+        });
+
+        it('should throw error when accessing nested property on undefined parent', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'stats/undefined/property',
+                operation: ModifierConst.OPS.INC,
+                value: 10
+            });
+            assert.throws(() => {
+                modifier.apply(target);
+            });
+        });
+
+        it('should return false when target is null', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 10
+            });
+            assert.strictEqual(modifier.apply(null), false);
+            assert.strictEqual(modifier.state, ModifierConst.MOD_UNDEFINED_TARGET);
+        });
+
+        it('should return false when target is undefined', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 10
+            });
+            assert.strictEqual(modifier.apply(undefined), false);
+            assert.strictEqual(modifier.state, ModifierConst.MOD_UNDEFINED_TARGET);
+        });
+    });
+
+    describe('METHOD Operation Errors', () => {
+        it('should return false when METHOD operation has non-existent method', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.METHOD,
+                value: 'nonExistentMethod'
+            });
+            let result = modifier.apply(target);
+            assert.strictEqual(result, false);
+            assert.strictEqual(modifier.state, ModifierConst.MOD_MODIFIER_ERROR);
+        });
+
+        it('should return false when METHOD operation has non-function property', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.METHOD,
+                value: 'key'
+            });
+            let result = modifier.apply(target);
+            assert.strictEqual(result, false);
+            assert.strictEqual(modifier.state, ModifierConst.MOD_MODIFIER_ERROR);
+        });
+    });
+
+    describe('Condition Validation Errors', () => {
+        it('should handle invalid condition instance (not Condition class)', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'attack',
+                operation: ModifierConst.OPS.INC,
+                value: 10,
+                conditions: [{key: 'fake', propertyKey: 'level', conditional: 'eq', value: 10}]
+            });
+            let result = modifier.apply(target);
+            assert.strictEqual(result, false);
+            assert.strictEqual(modifier.state, ModifierConst.MOD_MISSING_CONDITION_INSTANCE);
+        });
+
+        it('should handle empty conditions array same as no conditions', () => {
+            let modifier1 = new Modifier({
+                key: 'test1',
+                propertyKey: 'attack',
+                operation: ModifierConst.OPS.INC,
+                value: 10,
+                conditions: []
+            });
+            let result1 = modifier1.apply(target);
+            assert.strictEqual(result1, true);
+            let target2 = TestHelpers.createMockTarget();
+            let modifier2 = new Modifier({
+                key: 'test2',
+                propertyKey: 'attack',
+                operation: ModifierConst.OPS.INC,
+                value: 10
+            });
+            let result2 = modifier2.apply(target2);
+            assert.strictEqual(result2, true);
+            assert.strictEqual(target.attack, target2.attack);
+        });
+
+        it('should fail when any condition in array is invalid', () => {
+            let validCondition = new Condition({
+                key: 'valid',
+                propertyKey: 'level',
+                conditional: ModifierConst.COMPARE.GT,
+                value: 5
+            });
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'attack',
+                operation: ModifierConst.OPS.INC,
+                value: 10,
+                conditions: [validCondition, {fake: 'condition'}]
+            });
+            let result = modifier.apply(target);
+            assert.strictEqual(result, false);
+        });
+    });
+
+    describe('Extreme Values', () => {
+        it('should handle very large numbers without overflow', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: Number.MAX_SAFE_INTEGER
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 100+Number.MAX_SAFE_INTEGER);
+        });
+
+        it('should handle very small negative numbers', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.DEC,
+                value: Number.MAX_SAFE_INTEGER
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 100-Number.MAX_SAFE_INTEGER);
+        });
+
+        it('should handle zero as value', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 0
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 100);
+        });
+    });
+
+    describe('Limit Edge Cases', () => {
+        it('should handle minValue greater than maxValue', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 50,
+                minValue: 200,
+                maxValue: 100
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 100);
+        });
+
+        it('should handle minValue equal to maxValue', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 50,
+                minValue: 75,
+                maxValue: 75
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, 75);
+        });
+
+        it('should handle negative minValue and maxValue', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.DEC,
+                value: 150,
+                minValue: -100,
+                maxValue: -50
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, -50);
+        });
+
+        it('should throw when maxProperty points to non-existent property', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 100,
+                maxProperty: 'nonExistentProperty'
+            });
+            assert.throws(() => {
+                modifier.apply(target);
+            });
+        });
+
+        it('should not apply minProperty limit when value is 0 (falsy)', () => {
+            target.minHealth = 0;
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'health',
+                operation: ModifierConst.OPS.DEC,
+                value: 150,
+                minProperty: 'minHealth'
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.health, -50);
+        });
+    });
+
+    describe('Base Property Edge Cases', () => {
+        it('should throw when basePropertyKey does not exist', () => {
+            target.currentHealth = 50;
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'currentHealth',
+                basePropertyKey: 'nonExistentBase',
+                operation: ModifierConst.OPS.INC_P,
+                value: 50
+            });
+            assert.throws(() => {
+                modifier.apply(target, true, false);
+            });
+        });
+
+        it('should calculate percentage of zero as zero', () => {
+            target.currentHealth = 50;
+            target.baseHealth = 0;
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'currentHealth',
+                basePropertyKey: 'baseHealth',
+                operation: ModifierConst.OPS.INC_P,
+                value: 50
+            });
+            modifier.apply(target, true, false);
+            assert.strictEqual(target.currentHealth, 0);
+        });
+
+        it('should handle basePropertyKey with null value (null coerces to 0)', () => {
+            target.currentHealth = 50;
+            target.baseHealth = null;
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'currentHealth',
+                basePropertyKey: 'baseHealth',
+                operation: ModifierConst.OPS.INC_P,
+                value: 50
+            });
+            modifier.apply(target, true, false);
+            assert.strictEqual(target.currentHealth, 0);
+        });
+    });
+
+    describe('String Type Edge Cases', () => {
+        it('should handle empty string for STRING type', () => {
+            target.status = 'normal';
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'status',
+                operation: ModifierConst.OPS.SET,
+                type: ModifierConst.TYPES.STRING,
+                value: ''
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.status, '');
+        });
+
+        it('should handle NULL for STRING type by converting to string', () => {
+            target.status = 'normal';
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'status',
+                operation: ModifierConst.OPS.SET,
+                type: ModifierConst.TYPES.STRING,
+                value: null
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.status, 'null');
+        });
+
+        it('should handle undefined for STRING type by converting to string', () => {
+            target.status = 'normal';
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'status',
+                operation: ModifierConst.OPS.SET,
+                type: ModifierConst.TYPES.STRING,
+                value: undefined
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.status, 'undefined');
+        });
+
+        it('should handle object for STRING type by converting to string', () => {
+            target.status = 'normal';
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'status',
+                operation: ModifierConst.OPS.SET,
+                type: ModifierConst.TYPES.STRING,
+                value: {foo: 'bar'}
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.status, '[object Object]');
+        });
+    });
+
+    describe('Revert Edge Cases', () => {
+        it('should handle revert with conditions when conditionsOnRevert is false', () => {
+            let condition = new Condition({
+                key: 'level-check',
+                propertyKey: 'level',
+                conditional: ModifierConst.COMPARE.GT,
+                value: 100
+            });
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'attack',
+                operation: ModifierConst.OPS.INC,
+                value: 20,
+                conditions: [condition],
+                conditionsOnRevert: false
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.attack, 50);
+            let revertResult = modifier.revert(target);
+            assert.strictEqual(revertResult, true);
+            assert.strictEqual(target.attack, 30);
+        });
+
+        it('should handle revert with conditions when conditionsOnRevert is true', () => {
+            let condition = new Condition({
+                key: 'level-check',
+                propertyKey: 'level',
+                conditional: ModifierConst.COMPARE.GT,
+                value: 100
+            });
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'attack',
+                operation: ModifierConst.OPS.INC,
+                value: 20,
+                conditions: [condition],
+                conditionsOnRevert: true
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.attack, 50);
+            let revertResult = modifier.revert(target);
+            assert.strictEqual(revertResult, false);
+            assert.strictEqual(target.attack, 50);
+        });
+
+        it('should handle revert on SET_N operation', () => {
+            target.status = 'normal';
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'status',
+                operation: ModifierConst.OPS.SET_N,
+                type: ModifierConst.TYPES.STRING,
+                value: 'poisoned'
+            });
+            modifier.apply(target);
+            assert.strictEqual(target.status, 'poisoned');
+            modifier.revert(target);
+            assert.strictEqual(target.status, false);
+        });
+    });
+
+    describe('Constructor Property Preference', () => {
+        it('should prefer propertyKey over property_key when both provided', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                propertyKey: 'attack',
+                property_key: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 10
+            });
+            assert.strictEqual(modifier.propertyKey, 'attack');
+        });
+
+        it('should use property_key when propertyKey is missing', () => {
+            let modifier = new Modifier({
+                key: 'test',
+                property_key: 'health',
+                operation: ModifierConst.OPS.INC,
+                value: 10
+            });
+            assert.strictEqual(modifier.propertyKey, 'health');
+        });
+    });
 });

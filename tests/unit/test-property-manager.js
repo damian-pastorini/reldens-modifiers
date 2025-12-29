@@ -232,4 +232,365 @@ describe('PropertyManager', () => {
             assert.strictEqual(value, 42);
         });
     });
+
+    describe('NULL and Undefined Target Handling', () => {
+        it('should throw error when target is null', () => {
+            propertyManager = new PropertyManager();
+            assert.throws(() => {
+                propertyManager.getPropertyValue(null, 'health');
+            });
+        });
+
+        it('should throw error when target is undefined', () => {
+            propertyManager = new PropertyManager();
+            assert.throws(() => {
+                propertyManager.getPropertyValue(undefined, 'health');
+            });
+        });
+
+        it('should throw error when setting property on null target', () => {
+            propertyManager = new PropertyManager();
+            assert.throws(() => {
+                propertyManager.setOwnerProperty(null, 'health', 100);
+            });
+        });
+
+        it('should throw error when setting property on undefined target', () => {
+            propertyManager = new PropertyManager();
+            assert.throws(() => {
+                propertyManager.setOwnerProperty(undefined, 'health', 100);
+            });
+        });
+
+        it('should throw error when parent property is null', () => {
+            propertyManager = new PropertyManager();
+            let target = {stats: null};
+            assert.throws(() => {
+                propertyManager.getPropertyValue(target, 'stats/strength');
+            });
+        });
+
+        it('should throw error when parent property is undefined', () => {
+            propertyManager = new PropertyManager();
+            let target = {stats: undefined};
+            assert.throws(() => {
+                propertyManager.getPropertyValue(target, 'stats/strength');
+            });
+        });
+    });
+
+    describe('NULL and Undefined Value Handling', () => {
+        it('should set property to null', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            propertyManager.setOwnerProperty(target, 'health', null);
+            assert.strictEqual(target.health, null);
+        });
+
+        it('should get property when value is undefined (not set)', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let result = propertyManager.setOwnerProperty(target, 'health', undefined);
+            assert.strictEqual(result, 100);
+            assert.strictEqual(target.health, 100);
+        });
+
+        it('should set property to 0', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            propertyManager.setOwnerProperty(target, 'health', 0);
+            assert.strictEqual(target.health, 0);
+        });
+
+        it('should set property to false', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            propertyManager.setOwnerProperty(target, 'health', false);
+            assert.strictEqual(target.health, false);
+        });
+
+        it('should set property to empty string', () => {
+            propertyManager = new PropertyManager();
+            let target = {name: 'test'};
+            propertyManager.setOwnerProperty(target, 'name', '');
+            assert.strictEqual(target.name, '');
+        });
+
+        it('should set property to NaN', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            propertyManager.setOwnerProperty(target, 'health', NaN);
+            assert.ok(Number.isNaN(target.health));
+        });
+
+        it('should set property to Infinity', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            propertyManager.setOwnerProperty(target, 'health', Infinity);
+            assert.strictEqual(target.health, Infinity);
+        });
+    });
+
+    describe('Property Name Edge Cases', () => {
+        it('should throw error for empty string property name', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            assert.throws(() => {
+                propertyManager.getPropertyValue(target, '');
+            });
+        });
+
+        it('should handle property names with spaces', () => {
+            propertyManager = new PropertyManager();
+            let target = {'property name': 100};
+            let value = propertyManager.getPropertyValue(target, 'property name');
+            assert.strictEqual(value, 100);
+        });
+
+        it('should handle property names with special characters', () => {
+            propertyManager = new PropertyManager();
+            let target = {'prop-name': 100};
+            let value = propertyManager.getPropertyValue(target, 'prop-name');
+            assert.strictEqual(value, 100);
+        });
+
+        it('should handle property names with numbers', () => {
+            propertyManager = new PropertyManager();
+            let target = {'prop123': 100};
+            let value = propertyManager.getPropertyValue(target, 'prop123');
+            assert.strictEqual(value, 100);
+        });
+
+        it('should handle numeric string property names', () => {
+            propertyManager = new PropertyManager();
+            let target = {'123': 100};
+            let value = propertyManager.getPropertyValue(target, '123');
+            assert.strictEqual(value, 100);
+        });
+    });
+
+    describe('Very Deep Nesting', () => {
+        it('should handle 10 levels of nesting', () => {
+            propertyManager = new PropertyManager();
+            let target = {
+                l1: {l2: {l3: {l4: {l5: {l6: {l7: {l8: {l9: {l10: 42}}}}}}}}
+                }
+            };
+            let value = propertyManager.getPropertyValue(target, 'l1/l2/l3/l4/l5/l6/l7/l8/l9/l10');
+            assert.strictEqual(value, 42);
+        });
+
+        it('should set value in deeply nested structure', () => {
+            propertyManager = new PropertyManager();
+            let target = {
+                l1: {l2: {l3: {l4: {l5: {l6: {l7: {l8: {l9: {l10: 42}}}}}}}}
+                }
+            };
+            propertyManager.setOwnerProperty(target, 'l1/l2/l3/l4/l5/l6/l7/l8/l9/l10', 100);
+            assert.strictEqual(target.l1.l2.l3.l4.l5.l6.l7.l8.l9.l10, 100);
+        });
+
+        it('should throw error when deep path is invalid', () => {
+            propertyManager = new PropertyManager();
+            let target = {
+                l1: {l2: {l3: {l4: null}}}
+            };
+            assert.throws(() => {
+                propertyManager.getPropertyValue(target, 'l1/l2/l3/l4/l5/l6');
+            });
+        });
+    });
+
+    describe('Single Path Extraction', () => {
+        it('should return original target for single property', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let result = propertyManager.extractChildPropertyOwner(target, ['health']);
+            assert.strictEqual(result, target);
+        });
+
+        it('should return original target for empty path array', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let result = propertyManager.extractChildPropertyOwner(target, []);
+            assert.strictEqual(result, target);
+        });
+    });
+
+    describe('manageOwnerProperty Edge Cases', () => {
+        it('should get property when no value provided', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let result = propertyManager.manageOwnerProperty(target, 'health');
+            assert.strictEqual(result, 100);
+        });
+
+        it('should get property when value is explicitly undefined', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let result = propertyManager.manageOwnerProperty(target, 'health', undefined);
+            assert.strictEqual(result, 100);
+            assert.strictEqual(target.health, 100);
+        });
+
+        it('should handle setting nested property with null value', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            propertyManager.manageOwnerProperty(target, 'stats/strength', null);
+            assert.strictEqual(target.stats.strength, null);
+        });
+
+        it('should return the value after setting', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let result = propertyManager.manageOwnerProperty(target, 'health', 150);
+            assert.strictEqual(result, 150);
+        });
+    });
+
+    describe('Path with Trailing/Leading Slashes', () => {
+        it('should handle path with leading slash', () => {
+            propertyManager = new PropertyManager();
+            let target = {
+                '': {stats: {strength: 20}}
+            };
+            let value = propertyManager.getPropertyValue(target, '/stats/strength');
+            assert.strictEqual(value, 20);
+        });
+
+        it('should throw error for path with only slashes', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            assert.throws(() => {
+                propertyManager.getPropertyValue(target, '///');
+            });
+        });
+
+        it('should handle consecutive slashes in path', () => {
+            propertyManager = new PropertyManager();
+            let target = {
+                stats: {'': {strength: 20}}
+            };
+            let value = propertyManager.getPropertyValue(target, 'stats//strength');
+            assert.strictEqual(value, 20);
+        });
+    });
+
+    describe('Object Type Values', () => {
+        it('should set property to object', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let objValue = {a: 1, b: 2};
+            propertyManager.setOwnerProperty(target, 'data', objValue);
+            assert.strictEqual(target.data, objValue);
+        });
+
+        it('should set property to array', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let arrValue = [1, 2, 3];
+            propertyManager.setOwnerProperty(target, 'list', arrValue);
+            assert.strictEqual(target.list, arrValue);
+        });
+
+        it('should set property to function', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let fn = () => 42;
+            propertyManager.setOwnerProperty(target, 'method', fn);
+            assert.strictEqual(target.method, fn);
+        });
+
+        it('should get nested object property', () => {
+            propertyManager = new PropertyManager();
+            let target = {
+                data: {inner: {value: 42}}
+            };
+            let value = propertyManager.getPropertyValue(target, 'data/inner/value');
+            assert.strictEqual(value, 42);
+        });
+    });
+
+    describe('Property Overwriting', () => {
+        it('should overwrite existing simple property', () => {
+            propertyManager = new PropertyManager();
+            let target = {health: 100};
+            propertyManager.setOwnerProperty(target, 'health', 200);
+            assert.strictEqual(target.health, 200);
+        });
+
+        it('should overwrite existing nested property', () => {
+            propertyManager = new PropertyManager();
+            let target = TestHelpers.createMockTarget();
+            let originalDefense = target.stats.combat.defense;
+            propertyManager.setOwnerProperty(target, 'stats/combat/attack', 500);
+            assert.strictEqual(target.stats.combat.attack, 500);
+            assert.strictEqual(target.stats.combat.defense, originalDefense);
+        });
+
+        it('should overwrite object with primitive', () => {
+            propertyManager = new PropertyManager();
+            let target = {stats: {strength: 20}};
+            propertyManager.setOwnerProperty(target, 'stats', 42);
+            assert.strictEqual(target.stats, 42);
+        });
+
+        it('should overwrite primitive with object', () => {
+            propertyManager = new PropertyManager();
+            let target = {value: 42};
+            let newObj = {a: 1};
+            propertyManager.setOwnerProperty(target, 'value', newObj);
+            assert.strictEqual(target.value, newObj);
+        });
+    });
+
+    describe('Extreme Property Names', () => {
+        it('should handle very long property name', () => {
+            propertyManager = new PropertyManager();
+            let longName = 'a'.repeat(1000);
+            let target = {[longName]: 42};
+            let value = propertyManager.getPropertyValue(target, longName);
+            assert.strictEqual(value, 42);
+        });
+
+        it('should handle property name with unicode characters', () => {
+            propertyManager = new PropertyManager();
+            let target = {'プロパティ': 42};
+            let value = propertyManager.getPropertyValue(target, 'プロパティ');
+            assert.strictEqual(value, 42);
+        });
+
+        it('should handle property name with emoji', () => {
+            propertyManager = new PropertyManager();
+            let target = {'😀': 42};
+            let value = propertyManager.getPropertyValue(target, '😀');
+            assert.strictEqual(value, 42);
+        });
+    });
+
+    describe('Error Messages', () => {
+        it('should provide descriptive error for invalid nested property', () => {
+            propertyManager = new PropertyManager();
+            let target = {stats: {strength: 10}};
+            assert.throws(() => {
+                propertyManager.getPropertyValue(target, 'stats/invalid/deep');
+            }, /Invalid property "invalid"/);
+        });
+
+        it('should provide descriptive error for missing root property', () => {
+            propertyManager = new PropertyManager();
+            let target = {health: 100};
+            assert.throws(() => {
+                propertyManager.getPropertyValue(target, 'missing');
+            }, /Invalid property "missing"/);
+        });
+
+        it('should throw error when setting property on null parent', () => {
+            propertyManager = new PropertyManager();
+            let target = {stats: null};
+            assert.throws(() => {
+                propertyManager.setOwnerProperty(target, 'stats/strength', 20);
+            });
+        });
+    });
 });
