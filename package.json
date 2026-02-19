@@ -1,7 +1,7 @@
 {
     "name": "@reldens/modifiers",
     "scope": "@reldens",
-    "version": "0.27.0",
+    "version": "0.34.0",
     "description": "Reldens - Modifiers",
     "author": "Damian A. Pastorini",
     "license": "MIT",
@@ -32,7 +32,13 @@
     "bugs": {
         "url": "https://github.com/damian-pastorini/reldens-modifiers/issues"
     },
+    "scripts": {
+        "test": "node tests/run-tests.js",
+        "test:watch": "node --watch tests/run-tests.js",
+        "test:filter": "node tests/run-tests.js --filter=",
+        "test:coverage": "node --test --experimental-test-coverage tests/run-tests.js"
+    },
     "dependencies": {
-        "@reldens/utils": "^0.40.0"
+        "@reldens/utils": "^0.54.0"
     }
 }
